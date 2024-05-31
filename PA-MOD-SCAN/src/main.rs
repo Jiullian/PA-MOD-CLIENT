@@ -6,7 +6,7 @@ use std::env;
 
 fn main() {
     let args: Vec<String> = env::args().collect();
-    let advanced_mode = args.contains(&"--advanced".to_string());
+    let advanced_mode = true; // Fixe le mode avancé à toujours actif
 
     if args.len() > 2 {
         if args[1] == "--ip" {
@@ -31,5 +31,4 @@ fn main() {
         let ordre_json = r#"{"id": 1, "attack": "Test Attack"}"#.to_string();
         scan::scan(networks, ordre_json);
     }
-
 }
