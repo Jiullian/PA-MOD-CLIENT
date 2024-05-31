@@ -1,4 +1,6 @@
+#[cfg(feature = "camera_windows")]
 extern crate camera_capture;
+#[cfg(feature = "camera_windows")]
 extern crate image;
 
 #[cfg(feature = "camera_linux")]
@@ -11,7 +13,7 @@ use std::path::Path;
 
 #[cfg(target_os = "linux")]
 #[cfg(feature = "camera_linux")]
-fn picture(){
+pub fn picture(){
     let mut camera = rscam::new("/dev/video0").unwrap();
     camera.start(&rscam::Config {
         interval: (1, 30),
