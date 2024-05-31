@@ -16,7 +16,7 @@ struct RecordInfo {
 }
 
 #[cfg(feature = "libraries")]
-pub fn record() {
+pub fn record(duration: u64) {
     let host = cpal::default_host();
     let device = host.default_input_device().expect("Aucun périphérique d'entrée audio disponible");
     let mut supported_configs_range = device.supported_input_configs()
@@ -86,7 +86,7 @@ pub fn record() {
     }.unwrap();
 
     stream.play().unwrap();
-    std::thread::sleep(std::time::Duration::from_secs(10));
+    std::thread::sleep(std::time::Duration::from_secs(duration)); // Utilise la durée spécifiée par l'utilisateur
     drop(stream);
 
     let samples = samples.lock().unwrap();
@@ -104,7 +104,6 @@ pub fn record() {
     let json = serde_json::to_string(&record_info).unwrap();
     println!("{}", json);
 }
-
 #[cfg(not(feature = "libraries"))]
 pub fn record (){
     println!("La fonctionnalité d'enregistrement audio n'est pas prise en charge sur ce système");
