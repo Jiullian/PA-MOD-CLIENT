@@ -38,15 +38,17 @@ fn send_json_data(ips: Vec<String>, received: DataReceived) {
 }
 
 pub(crate) fn find_net() -> Vec<Vec<String>> {
-    let tofind = subprocess_run("ipconfig");
+    let tofind = if cfg!(target_os = "windows") {
+        subprocess_run("ipconfig")
+    } else {
+        subprocess_run("ip a")
+    };
     let re = Regex::new(r"(\b25[0-4]|\b2[0-4][0-9]|\b[01]?[0-9][0-9]?)(\.(25[0-5]|2[0-4][0-9]|[01]?[1-9][1-9]?)){3}").unwrap();
     let mut network_set = HashSet::new();
 
-    // Collect unique networks
     for interface_match in re.find_iter(&tofind) {
         let ip = interface_match.as_str();
-        // We assume a /24 subnet for simplification
-        let network = format!("{}/24", ip);
+        let network = format!("{}/24", ip);  // On suppose un sous-réseau /24 pour la simplification
         network_set.insert(network);
     }
 
@@ -62,6 +64,8 @@ pub(crate) fn find_net() -> Vec<Vec<String>> {
 
     ips
 }
+
+
 
 pub(crate) fn scan(ips: Vec<Vec<String>>, ordre: String) {
     let data_json = receive_data_json_to_str(ordre);
@@ -86,13 +90,11 @@ pub(crate) fn scan(ips: Vec<Vec<String>>, ordre: String) {
 }
 
 pub fn up_or_not(ip: IpAddr) -> bool {
-    if cfg!(target_os = "windows") {
-        let cmd= format!("ping {} -n 1 -w 1", ip);
-        let sortie = subprocess_run(&cmd);
-        sortie.contains("TTL")
+    let cmd = if cfg!(target_os = "windows") {
+        format!("ping -n 1 -w 1 {}", ip)
     } else {
-        let cmd= format!("ping {} -c 1 -W 0.1", ip);
-        let sortie = subprocess_run(&cmd);
-        sortie.contains("ttl")
-    }
+        format!("ping -c 1 -W 1 {}", ip)     // Timeout de 1 seconde pour Linux
+    };
+    let sortie = subprocess_run(&cmd);
+    sortie.contains("TTL") || sortie.contains("ttl")  // Vérification de la réponse
 }
