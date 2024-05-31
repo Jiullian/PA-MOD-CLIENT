@@ -6,7 +6,7 @@ use std::io::ErrorKind::WouldBlock;
 use std::thread;
 #[cfg(feature = "libraries_windows")]
 use std::time::Duration;
-#[cfg(feature = "libraries")]
+#[cfg(feature = "libraries_linux")]
 use xcap::Monitor;
 
 use serde::{Serialize, Deserialize};
@@ -19,7 +19,7 @@ struct CaptureInfo {
     output: String,
 }
 
-#[cfg(target_os = "linux")]
+#[cfg(target_os = "libraries_linux")]
 #[cfg(feature = "libraries")]
 pub fn monitor_capture() -> Result<(), Box<dyn std::error::Error>> {
     let monitors = Monitor::all()?;
@@ -77,7 +77,7 @@ pub fn monitor_capture() -> Result<(), Box<dyn std::error::Error>> {
     Ok(())
 }
 
-#[cfg(not(feature = "libraries"))]
+#[cfg(not(feature = "libraries_linux"))]
 #[cfg(not(feature = "libraries_windows"))]
 pub fn monitor_capture(){
     println!("La fonctionnalité de capture d'écran n'est pas prise en charge sur ce système");
