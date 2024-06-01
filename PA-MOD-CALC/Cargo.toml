@@ -1,0 +1,11 @@
+[package]
+name = "PA-MOD-CALC"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+reqwest = "0.12.4"
+tokio = { version = "1.0.0", features = ["rt", "rt-multi-thread", "macros"] }
+
+md5 = "0.7.0"
+hex = "0.4.3"
