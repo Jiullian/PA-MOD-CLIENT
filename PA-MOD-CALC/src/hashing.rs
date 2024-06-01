@@ -1,48 +1,65 @@
 use std::error::Error;
-use std::io;
-use std::io::BufRead;
-use std::path::PathBuf;
-use tokio::task;
+use std::fs::File;
+use std::io::{self, BufRead};
+use std::path::Path;
+use std::thread::sleep;
+use hex::ToHex;
+use md5;
+use sha1::{Digest, Sha1};
 
-pub async fn brute_force_md5_from_wordlist(target_hash: &str) -> Result<Option<String>, Box<dyn Error>> {
-    // Convert to bytes
-    let target_hash_bytes = hex::decode(target_hash)?;
+pub async fn brute_wordlist(hash: &str, wordlist_nb: &str, type_of_hash: &str) -> Result<Option<String>, Box<dyn Error>> {
+    let wordlist_path = format!("bibli/rck{}.txt", wordlist_nb);
+    let type_of_hash = type_of_hash.to_lowercase();
 
-    // bibli path
-    let current_dir = std::env::current_dir()?;
-    let bibli_path = current_dir.join("bibli");
-
-    // Perform brute force asynchronously
-    task::spawn_blocking(move || {
-        brute_force_from_wordlist(&bibli_path, &target_hash_bytes)
-    })
-        .await.expect("Error while brute forcing")
-}
-
-fn brute_force_from_wordlist(bibli_path: &PathBuf, target_hash: &[u8]) -> Result<Option<String>, Box<dyn Error>> {
-    for cmp in 1..=15 {
-        let file_path = bibli_path.join(format!("rck{}.txt", cmp));
-
-        if let Some(mdp) = brute_force_with_file(&file_path, target_hash)? {
-            return Ok(Some(mdp));
+    match type_of_hash.as_str() {
+        "md5" => {
+            return brute_md5(hash, &wordlist_path).await;
+        }
+        "sha1" => {
+            return brute_sha1(hash, &wordlist_path).await;
+        }
+        _ => {
+            return Err("Type de hash non supporté".into());
         }
     }
+}
 
+async fn brute_md5(hash: &str, wordlist_path: &str) -> Result<Option<String>, Box<dyn Error>> {
+    if let Ok(lines) = read_lines(wordlist_path) {
+        for line in lines.lines() {
+            if let Ok(password) = line {
+                let digest = format!("{:x}", md5::compute(password.as_bytes()));
+                if digest == hash {
+                    return Ok(Some(password));
+                }
+            }
+        }
+    }
     Ok(None)
 }
 
-fn brute_force_with_file(file_path: &PathBuf, target_hash: &[u8]) -> Result<Option<String>, Box<dyn Error>> {
-    let file = std::fs::File::open(file_path)?;
-    let reader = io::BufReader::new(file);
+async fn brute_sha1(hash: &str, wordlist_path: &str) -> Result<Option<String>, Box<dyn Error>> {
+    if let Ok(lines) = read_lines(wordlist_path) {
+        for line in lines.lines() {
+            if let Ok(password) = line {
+                let mut hasher = Sha1::new();
+                hasher.update(password.as_bytes());
+                let result = hasher.finalize();
+                let digest_hex = hex::encode(result);
 
-    for line in reader.lines() {
-        let word = line?;
-        let hash = md5::compute(word.as_bytes());
-
-        if hash.as_slice() == target_hash {
-            return Ok(Some(word));
+                if digest_hex == hash {
+                    return Ok(Some(password));
+                }
+            }
         }
     }
-
     Ok(None)
+}
+
+fn read_lines<P>(filename: P) -> io::Result<io::BufReader<File>>
+    where
+        P: AsRef<Path>,
+{
+    let file = File::open(filename)?;
+    Ok(io::BufReader::new(file))
 }
