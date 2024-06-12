@@ -24,8 +24,6 @@ async fn send_udp_message(server_addr: &str) -> Result<(), Box<dyn Error>> {
 
 
 
-
-
 async fn chrono(tx: mpsc::Sender<()>, ddos_time:u64) {
 
     sleep(Duration::from_secs(ddos_time)).await;
@@ -77,13 +75,28 @@ async fn main() {
     });
 
 
-    let ddos_task = tokio::spawn(async move {
-        ddos_udp(&mut rx, target).await;
-    });
+    let mut ddos_task;
 
+    match args[4].as_str() {
+        "udp" => {
+            ddos_task = tokio::spawn(async move {
+                ddos_udp(&mut rx, target).await;
+            });
 
-    chrono_task.await.unwrap();
-    ddos_task.await.unwrap();
+            chrono_task.await.unwrap();
+        },
+        "tcp" => {
+            println!("tcp ddos");
+        },
+        "ping" => {
+            println!("ping ddos");
+        },
+
+        _ => {
+            println!("veuillez donner une méthode : tcp, udp ou ping ");
+            return ()
+        }
+    }
 }
 
 
