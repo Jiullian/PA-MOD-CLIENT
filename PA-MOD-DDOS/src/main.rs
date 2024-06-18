@@ -61,8 +61,15 @@ async fn main() {
             chrono_task.await.unwrap();
         },
         "tcp" => {
-            println!("tcp ddos");
-            ddos_tcp::ddos_udp(&mut rx, target,rate_limite).await;
+            let target_ip = args[1].clone();
+            let target_port = args[2].clone();
+
+            ddos_task = tokio::spawn(async move {
+                ddos_tcp::ddos_tcp(&mut rx, target_ip,target_port,rate_limite).await;
+            });
+
+            chrono_task.await.unwrap();
+
         },
         "ping" => {
             let target = format!("{}", args[1]);
